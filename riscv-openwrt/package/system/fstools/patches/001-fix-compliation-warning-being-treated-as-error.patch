@@ -1,0 +1,31 @@
+From abfdb99911da8ae382709d20f5232c9f1fee3d2a Mon Sep 17 00:00:00 2001
+From: yejq <yejq.jiaqiang@gmail.com>
+Date: Sun, 14 Aug 2022 17:17:25 +0800
+Subject: [PATCH] fix compliation warning being treated as error
+
+fstools-2022-06-02-93369be0/libfstools/common.c:120:3: error: ignoring return value of 'system', declared with attribute warn_unused_result [-Werror=unused-result]
+   system(str);
+   ^~~~~~~~~~~
+cc1: all warnings being treated as errors
+ninja: build stopped: subcommand failed.
+---
+ libfstools/common.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libfstools/common.c b/libfstools/common.c
+index 1b22d2c..f97b7ff 100644
+--- a/libfstools/common.c
++++ b/libfstools/common.c
+@@ -117,7 +117,8 @@ int block_volume_format(struct volume *v, uint64_t offset, const char *bdev)
+ 	switch (volume_identify(v)) {
+ 	case FS_TARGZ:
+ 		snprintf(str, sizeof(str), "gzip -cd %s > /tmp/sysupgrade.tar", v->blk);
+-		system(str);
++		ret = system(str);
++		ULOG_INFO("system(%s) => %d\n", str, ret);
+ 		/* fall-through */
+ 	case FS_NONE:
+ 		ULOG_INFO("overlay filesystem in %s has not been formatted yet\n", v->blk);
+-- 
+2.25.1
+
