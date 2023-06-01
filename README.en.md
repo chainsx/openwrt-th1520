@@ -1,10 +1,8 @@
-## 开始
+## Getting started
 
-### 环境准备
+### Prepare your environment
 
-推荐使用 ubuntu-20.04 x86_64 主机进行编译，磁盘空间剩余大于 50 GB。
-
-#### 安装依赖
+#### Install depend
 
 ```
 sudo apt update -y
@@ -17,13 +15,13 @@ libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo ugl
 vim wget xmlto xxd zlib1g-dev
 ```
 
-#### 下载源码
+#### Clone Code
 
 ```
 git clone https://github.com/chainsx/openwrt-th1520 --depth=1
 ```
 
-#### 更新代码
+#### update feeds
 
 ```
 cd openwrt-th1520/riscv-openwrt
@@ -32,41 +30,30 @@ cd openwrt-th1520/riscv-openwrt
 cd ..
 ```
 
-#### 应用配置
+#### Apply build configure
 
 ```
 cp lpi4a.config riscv-openwrt/
 cd riscv-openwrt && make defconfig
 ```
 
-#### 自行配置
-
-```
-make menuconfig
-```
-
-#### 编译
+#### Build openwrt
 
 ```
 make download V=s -j$(nproc) && make V=s -j$(nproc)
 ```
 
-### 一次构建脚本
+### Simply start with the build script
 
 ```
 bash build_all.sh
 ```
 
-## 如何使用
+## How to use
 
-### 刷写 u-boot 到 EMMC
+### Flash u-boot image to EMMC
 
-1.  [从这里](./u-boot-with-spl.bin)下载 u-boot 文件。
-
-2.  按住板子上的 BOOT 键，然后将板子用数据线与电脑连接。
-
-3.  以下是在 Linux 上刷写 u-boot 的命令实例，Windows 同理。
-
+Download SD-Boot u-boot from [here](./u-boot-with-spl.bin)
 
 ```
 sudo ./fastboot flash ram ./images/u-boot-with-spl.bin
@@ -75,10 +62,6 @@ sleep 1
 sudo ./fastboot flash uboot ./images/u-boot-with-spl.bin
 ```
 
-### 刷写 openwrt 到 SD
+### Flash openwrt image to micro SD card
 
-自行编译的 openwrt 将会在 `riscv-openwrt/bin/target` 文件夹下生成，将其解压然后刷写到 SD 卡上。
-
-## 感谢
-
-[Estela ad Astra](https://github.com/saeziae)
+The openwrt image will be generated under `riscv-openwrt/bin/target`, decompress it and write it to micro SD card.
