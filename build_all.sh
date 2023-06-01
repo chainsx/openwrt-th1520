@@ -19,7 +19,7 @@ update_feeds(){
 }
 
 apply_feeds(){
-  cp lpi4a.config riscv-openwrt/
+  cp lpi4a.config riscv-openwrt/.config
   cd riscv-openwrt && make defconfig
 }
 
