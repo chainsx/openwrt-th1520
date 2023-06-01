@@ -90,12 +90,12 @@ else ifneq (,$(findstring $(ARCH) , mipsel mips64 mips64el ))
   LINUX_KARCH := mips
 else ifneq (,$(findstring $(ARCH) , powerpc64 ))
   LINUX_KARCH := powerpc
+else ifneq (,$(findstring $(ARCH) , riscv64 ))
+  LINUX_KARCH := riscv
 else ifneq (,$(findstring $(ARCH) , sh2 sh3 sh4 ))
   LINUX_KARCH := sh
 else ifneq (,$(findstring $(ARCH) , i386 x86_64 ))
   LINUX_KARCH := x86
-else ifneq (,$(findstring $(ARCH) , riscv64 ))
-  LINUX_KARCH := riscv
 else
   LINUX_KARCH := $(ARCH)
 endif
@@ -112,8 +112,7 @@ KERNEL_MAKE_FLAGS = \
 	KBUILD_BUILD_HOST="$(call qstrip,$(CONFIG_KERNEL_BUILD_DOMAIN))" \
 	KBUILD_BUILD_TIMESTAMP="$(KBUILD_BUILD_TIMESTAMP)" \
 	KBUILD_BUILD_VERSION="0" \
-	HOST_LOADLIBES="-L$(STAGING_DIR_HOST)/lib" \
-	KBUILD_HOSTLDLIBS="-L$(STAGING_DIR_HOST)/lib" \
+	KBUILD_HOSTLDFLAGS="-L$(STAGING_DIR_HOST)/lib" \
 	CONFIG_SHELL="$(BASH)" \
 	$(if $(findstring c,$(OPENWRT_VERBOSE)),V=1,V='') \
 	$(if $(PKG_BUILD_ID),LDFLAGS_MODULE=--build-id=0x$(PKG_BUILD_ID)) \
@@ -128,15 +127,15 @@ ifeq ($(call qstrip,$(CONFIG_EXTERNAL_KERNEL_TREE))$(call qstrip,$(CONFIG_KERNEL
 	KERNELRELEASE=$(LINUX_VERSION)
 endif
 
-KERNEL_MAKEOPTS := -C $(LINUX_DIR) $(KERNEL_MAKE_FLAGS)
+ifneq ($(HOST_OS),Linux)
+  KERNEL_MAKE_FLAGS += CONFIG_STACK_VALIDATION=
+  export SKIP_STACK_VALIDATION:=1
+endif
+
+KERNEL_MAKEOPTS = -C $(LINUX_DIR) $(KERNEL_MAKE_FLAGS)
 
 ifdef CONFIG_USE_SPARSE
   KERNEL_MAKEOPTS += C=1 CHECK=$(STAGING_DIR_HOST)/bin/sparse
-endif
-
-ifneq ($(HOST_OS),Linux)
-  KERNEL_MAKEOPTS += CONFIG_STACK_VALIDATION=
-  export SKIP_STACK_VALIDATION:=1
 endif
 
 PKG_EXTMOD_SUBDIRS ?= .

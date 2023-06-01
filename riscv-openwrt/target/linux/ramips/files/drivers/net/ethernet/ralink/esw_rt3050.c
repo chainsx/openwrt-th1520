@@ -79,6 +79,7 @@
 #define RT305X_ESW_LED_100MACT		8
 /* Additional led states not in datasheet: */
 #define RT305X_ESW_LED_BLINK		10
+#define RT305X_ESW_LED_OFF		11
 #define RT305X_ESW_LED_ON		12
 
 #define RT305X_ESW_LINK_S		25
@@ -174,7 +175,7 @@
 #define RT305X_ESW_NUM_LEDS		5
 
 #define RT5350_ESW_REG_PXTPC(_x)	(0x150 + (4 * _x))
-#define RT5350_EWS_REG_LED_POLARITY	0x168
+#define RT5350_EWS_REG_LED_CONTROL	0x168
 
 enum {
 	/* Global attributes. */
@@ -227,6 +228,7 @@ struct rt305x_esw {
 	unsigned int		reg_initval_fct2;
 	unsigned int		reg_initval_fpa2;
 	unsigned int		reg_led_polarity;
+	unsigned int		reg_led_source;
 
 	struct switch_dev	swdev;
 	bool			global_vlan_enable;
@@ -517,11 +519,11 @@ static void esw_hw_init(struct rt305x_esw *esw)
 	esw_w32(esw, 0x00000000, RT305X_ESW_REG_FPA);
 
 	/* Force Link/Activity on ports */
-	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P0LED);
-	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P1LED);
-	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P2LED);
-	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P3LED);
-	esw_w32(esw, 0x00000005, RT305X_ESW_REG_P4LED);
+	esw_w32(esw, RT305X_ESW_LED_LINKACT, RT305X_ESW_REG_P0LED);
+	esw_w32(esw, RT305X_ESW_LED_LINKACT, RT305X_ESW_REG_P1LED);
+	esw_w32(esw, RT305X_ESW_LED_LINKACT, RT305X_ESW_REG_P2LED);
+	esw_w32(esw, RT305X_ESW_LED_LINKACT, RT305X_ESW_REG_P3LED);
+	esw_w32(esw, RT305X_ESW_LED_LINKACT, RT305X_ESW_REG_P4LED);
 
 	/* Copy disabled port configuration from device tree setup */
 	port_disable = esw->port_disable;
@@ -589,7 +591,7 @@ static void esw_hw_init(struct rt305x_esw *esw)
 
 		/* set the led polarity */
 		esw_w32(esw, esw->reg_led_polarity & 0x1F,
-			RT5350_EWS_REG_LED_POLARITY);
+			RT5350_EWS_REG_LED_CONTROL);
 
 		/* local registers */
 		rt305x_mii_write(esw, 0, 31, 0x8000);
@@ -644,9 +646,10 @@ static void esw_hw_init(struct rt305x_esw *esw)
 
 		esw_reset_ephy(esw);
 
-		/* set the led polarity */
-		esw_w32(esw, esw->reg_led_polarity & 0x1F,
-			RT5350_EWS_REG_LED_POLARITY);
+		/* set the led polarity and led source */
+		esw_w32(esw, (esw->reg_led_polarity & 0x1F) |
+				((esw->reg_led_source << 8) & 0x700),
+				RT5350_EWS_REG_LED_CONTROL);
 
 		rt305x_mii_write(esw, 0, 31, 0x2000); /* change G2 page */
 		rt305x_mii_write(esw, 0, 26, 0x0020);
@@ -763,7 +766,6 @@ static irqreturn_t esw_interrupt(int irq, void *_esw)
 {
 	struct rt305x_esw *esw = (struct rt305x_esw *) _esw;
 	u32 status;
-	int i;
 
 	status = esw_r32(esw, RT305X_ESW_REG_ISR);
 	if (status & RT305X_ESW_PORT_ST_CHG) {
@@ -1435,6 +1437,10 @@ static int esw_probe(struct platform_device *pdev)
 	if (reg_init)
 		esw->reg_led_polarity = be32_to_cpu(*reg_init);
 
+	reg_init = of_get_property(np, "mediatek,led_source", NULL);
+	if (reg_init)
+		esw->reg_led_source = be32_to_cpu(*reg_init);
+
 	esw->rst_esw = devm_reset_control_get(&pdev->dev, "esw");
 	if (IS_ERR(esw->rst_esw))
 		esw->rst_esw = NULL;
@@ -1526,7 +1532,7 @@ int rt3050_esw_init(struct fe_priv *priv)
 	}
 
 	dev_info(&pdev->dev, "mediatek esw at 0x%08lx, irq %d initialized\n",
-		   esw->base, esw->irq);
+		 (long unsigned int)esw->base, esw->irq);
 
 	return 0;
 }

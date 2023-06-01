@@ -83,7 +83,7 @@ define Device/loader-okli-uimage
   LOADER_TYPE := bin
   COMPILE := loader-$(1).bin loader-$(1).uImage
   COMPILE/loader-$(1).bin := loader-okli-compile
-  COMPILE/loader-$(1).uImage := append-loader-okli $(1) | pad-to 64k | \
+  COMPILE/loader-$(1).uImage := loader-okli-compile | pad-to 64k | \
 	lzma | uImage lzma
 endef
 
@@ -97,6 +97,7 @@ endif
 ifeq ($(SUBTARGET),tiny)
 include tiny-netgear.mk
 include tiny-tp-link.mk
+include tiny-ubnt.mk
 endif
 
 $(eval $(call BuildImage))

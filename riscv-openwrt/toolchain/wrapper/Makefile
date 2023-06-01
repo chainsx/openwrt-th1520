@@ -12,24 +12,15 @@ PKG_VERSION:=1
 
 include $(INCLUDE_DIR)/toolchain-build.mk
 
-EXTC_CFLAGS  =
-ifeq ($(CONFIG_SOFT_FLOAT),y)
-EXTC_CFLAGS += -msoft-float
-endif
-ifneq ($(call qstrip,$(CONFIG_TARGET_OPTIMIZATION)),)
-EXTC_CFLAGS += $(call qstrip,$(CONFIG_TARGET_OPTIMIZATION))
-endif
-ifneq ($(call qstrip,$(CONFIG_TOOLCHAIN_LIBC)),)
-EXTC_CFLAGS += -m$(call qstrip,$(CONFIG_TOOLCHAIN_LIBC))
-endif
 
 # 1: args
 define toolchain_util
 $(strip $(SCRIPT_DIR)/ext-toolchain.sh --toolchain $(CONFIG_TOOLCHAIN_ROOT) \
-	--cflags "$(EXTC_CFLAGS)" \
+	--cflags $(CONFIG_TARGET_OPTIMIZATION) \
+	--cflags "$(if $(call qstrip,$(CONFIG_TOOLCHAIN_LIBC)),-m$(call qstrip,$(CONFIG_TOOLCHAIN_LIBC))) $(if $(CONFIG_SOFT_FLOAT),-msoft-float)" \
 	--cflags "$(patsubst ./%,-I$(TOOLCHAIN_ROOT_DIR)/%,$(call qstrip,$(CONFIG_TOOLCHAIN_INC_PATH)))" \
 	--cflags "$(patsubst ./%,-L$(TOOLCHAIN_ROOT_DIR)/%,$(call qstrip,$(CONFIG_TOOLCHAIN_LIB_PATH)))" \
-	$(if $(CONFIG_TOOLCHAIN_LTO_ARCHIVE_FIXUP),--lto-archive-fixup) $(1))
+	$(1))
 endef
 
 # 1: config symbol
@@ -58,15 +49,9 @@ define Host/Configure
 endef
 
 define Host/Compile
-	$(HOSTCC) -D_GNU_SOURCE $(HOST_CFLAGS) \
-		-DTCW_ROOT='$(CONFIG_TOOLCHAIN_ROOT)' \
-		$(if $(EXTC_CFLAGS),-DTCW_CFLAGS='"$(EXTC_CFLAGS)"') \
-		-o $(HOST_BUILD_DIR)/toolchain-wrapper src/toolchain-wrapper.c
 endef
 
 define Host/Install
-	[ ! -e "$(TOOLCHAIN_DIR)/bin" ] && mkdir -p "$(TOOLCHAIN_DIR)/bin"; exit 0
-	$(INSTALL_BIN) $(HOST_BUILD_DIR)/toolchain-wrapper "$(TOOLCHAIN_DIR)/bin/"
 	$(call toolchain_util,--wrap "$(TOOLCHAIN_DIR)/bin")
 endef
 

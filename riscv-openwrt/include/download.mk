@@ -18,6 +18,10 @@ endif
 
 DOWNLOAD_RDEP=$(STAMP_PREPARED) $(HOST_STAMP_PREPARED)
 
+# Export options for download.pl
+export DOWNLOAD_CHECK_CERTIFICATE:=$(CONFIG_DOWNLOAD_CHECK_CERTIFICATE)
+export DOWNLOAD_TOOL_CUSTOM:=$(CONFIG_DOWNLOAD_TOOL_CUSTOM)
+
 define dl_method_git
 $(if $(filter https://github.com/% git://github.com/%,$(1)),github_archive,git)
 endef
@@ -183,7 +187,7 @@ define DownloadMethod/svn
 		svn export --non-interactive --trust-server-cert -r$(VERSION) $(URL) $(SUBDIR) || \
 		svn export --non-interactive -r$(VERSION) $(URL) $(SUBDIR) ) && \
 		echo "Packing checkout..." && \
-		export TAR_TIMESTAMP="" && \
+		export TAR_TIMESTAMP="`svn info -r$(VERSION) --show-item last-changed-date $(URL)`" && \
 		$(call dl_tar_pack,$(TMP_DIR)/dl/$(FILE),$(SUBDIR)) && \
 		mv $(TMP_DIR)/dl/$(FILE) $(DL_DIR)/ && \
 		rm -rf $(SUBDIR); \

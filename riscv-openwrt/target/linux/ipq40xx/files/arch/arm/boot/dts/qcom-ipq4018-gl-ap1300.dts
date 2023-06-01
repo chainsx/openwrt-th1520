@@ -34,10 +34,6 @@
 			status = "okay";
 		};
 
-		ess-psgmii@98000 {
-			status = "okay";
-		};
-
 		tcsr@1949000 {
 			compatible = "qcom,tcsr";
 			reg = <0x1949000 0x100>;
@@ -79,16 +75,6 @@
 		watchdog@b017000 {
 			status = "okay";
 		};
-
-		ess-switch@c000000 {
-			status = "okay";
-			switch_lan_bmp = <0x18>;
-			switch_wan_bmp = <0x20>;
-		};
-
-		edma@c080000 {
-			status = "okay";
-		};
 	};
 
 	keys {
@@ -105,13 +91,13 @@
 		compatible = "gpio-leds";
 
 		led_power: power {
-			label = "green:power";
+			label = "white:power";
 			gpios = <&tlmm 2 GPIO_ACTIVE_HIGH>;
 			default-state = "on";
 		};
 
 		wan {
-			label = "green:wan";
+			label = "white:wan";
 			gpios = <&tlmm 3 GPIO_ACTIVE_HIGH>;
 		};
 	};
@@ -193,6 +179,14 @@
 				#address-cells = <1>;
 				#size-cells = <1>;
 
+				macaddr_art_0: mac-address@0 {
+					reg = <0x0 0x6>;
+				};
+
+				macaddr_art_6: mac-address@6 {
+					reg = <0x6 0x6>;
+				};
+
 				precal_art_1000: precal@1000 {
 					reg = <0x1000 0x2f20>;
 				};
@@ -267,6 +261,30 @@
 
 &usb3_ss_phy {
 	status = "okay";
+};
+
+&gmac {
+	status = "okay";
+};
+
+&switch {
+	status = "okay";
+};
+
+&swport4 {
+	status = "okay";
+	label = "lan";
+
+	nvmem-cells = <&macaddr_art_0>;
+	nvmem-cell-names = "mac-address";
+};
+
+&swport5 {
+	status = "okay";
+	label = "wan";
+
+	nvmem-cells = <&macaddr_art_6>;
+	nvmem-cell-names = "mac-address";
 };
 
 &wifi0 {

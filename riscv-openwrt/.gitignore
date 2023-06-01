@@ -32,5 +32,3 @@ git-src
 .cproject
 .ccache
 .vscode*
-/.tag-built
-/.tag-configured

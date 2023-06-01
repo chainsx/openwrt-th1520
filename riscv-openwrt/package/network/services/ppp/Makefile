@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=ppp
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/paulusmack/ppp
@@ -26,6 +26,7 @@ PKG_VERSION:=$(PKG_RELEASE_VERSION).git-$(PKG_SOURCE_DATE)
 PKG_BUILD_DEPENDS:=libpcap
 
 PKG_ASLR_PIE_REGULAR:=1
+PKG_BUILD_FLAGS:=gc-sections lto
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
 
@@ -183,7 +184,6 @@ $(call Build/Configure/Default,, \
 	mkdir -p $(PKG_BUILD_DIR)/pppd/plugins/pppoatm/linux
 	$(CP) \
 		$(LINUX_DIR)/include/linux/compiler.h \
-		$(LINUX_DIR)/include/$(LINUX_UAPI_DIR)linux/atm*.h \
 		$(PKG_BUILD_DIR)/pppd/plugins/pppoatm/linux/
 
 	# Kernel 4.14.9+ only, ignore the exit status of cp in case the file
@@ -191,9 +191,6 @@ $(call Build/Configure/Default,, \
 	-$(CP) $(LINUX_DIR)/include/linux/compiler_types.h \
 		$(PKG_BUILD_DIR)/pppd/plugins/pppoatm/linux/
 endef
-
-TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
-TARGET_LDFLAGS += -Wl,--gc-sections -flto -fuse-linker-plugin
 
 MAKE_FLAGS += COPTS="$(TARGET_CFLAGS)" \
 		PRECOMPILED_FILTER=1 \

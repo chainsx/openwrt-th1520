@@ -27,7 +27,7 @@ CFLAGS=""
 TOOLCHAIN="."
 
 LIBC_TYPE=""
-LTO_ARCHIVE_FIXUP=""
+
 
 # Library specs
 LIB_SPECS="
@@ -50,6 +50,7 @@ BIN_SPECS="
 	gdbserver: gdbserver
 "
 
+OVERWRITE_CONFIG=""
 
 test_c() {
 	cat <<-EOT | "${CC:-false}" $CFLAGS -o /dev/null -x c - 2>/dev/null
@@ -201,11 +202,33 @@ find_bins() {
 
 wrap_bin_cc() {
 	local out="$1"
+	local bin="$2"
 
-	# remove the target if already exists
-	[ -e "$out" ] && rm -rf "$out"
-	ln -sv toolchain-wrapper "$out" || exit 2
-	return 0
+	echo    '#!/bin/sh'                                                > "$out"
+	echo    'for arg in "$@"; do'                                     >> "$out"
+	echo    ' case "$arg" in -l*|-L*|-shared|-static)'                >> "$out"
+	echo -n '  exec "'"$bin"'" '"$CFLAGS"' ${STAGING_DIR:+'           >> "$out"
+	echo -n '-idirafter "$STAGING_DIR/usr/include" '                  >> "$out"
+	echo -n '-L "$STAGING_DIR/usr/lib" '                              >> "$out"
+	echo    '-Wl,-rpath-link,"$STAGING_DIR/usr/lib"} "$@" ;;'         >> "$out"
+	echo    ' esac'                                                   >> "$out"
+	echo    'done'                                                    >> "$out"
+	echo -n 'exec "'"$bin"'" '"$CFLAGS"' ${STAGING_DIR:+'             >> "$out"
+	echo    '-idirafter "$STAGING_DIR/usr/include"} "$@"'             >> "$out"
+
+	chmod +x "$out"
+}
+
+wrap_bin_ld() {
+	local out="$1"
+	local bin="$2"
+
+	echo    '#!/bin/sh'                                                > "$out"
+	echo -n 'exec "'"$bin"'" ${STAGING_DIR:+'                         >> "$out"
+	echo -n '-L "$STAGING_DIR/usr/lib" '                              >> "$out"
+	echo    '-rpath-link "$STAGING_DIR/usr/lib"} "$@"'                >> "$out"
+
+	chmod +x "$out"
 }
 
 wrap_bin_other() {
@@ -218,34 +241,6 @@ wrap_bin_other() {
 	chmod +x "$out"
 }
 
-wrap_bin_lto() {
-	local out="$1"
-	local bin="$2"
-
-	if [ -z "$LTO_ARCHIVE_FIXUP" ] ; then
-		echo    '#!/bin/sh'                                            > "$out"
-		echo    "exec \"$bin\" \$@"                                   >> "$out"
-		chmod +x "$out"
-		return 0
-	fi
-
-	# the script is executed by GNU bash,
-	# regular expressions are possible via [[ ]]
-	if [[ "$bin" =~ (^.+)-([^-]+)$ ]] ; then
-		bin="${BASH_REMATCH[1]}-gcc-${BASH_REMATCH[2]}"
-		if [ ! -x "$bin" ] ; then
-			echo "Error, toolchain not found: \"$bin\"." 1>&2
-			exit 1
-		fi
-		echo    '#!/bin/sh'                                            > "$out"
-		echo    "exec \"$bin\" \$@"                                   >> "$out"
-		chmod +x "$out"
-		return 0
-	fi
-	echo "Error, invalid toolchain binary: \"$bin\"" 1>&2
-	exit 1
-}
-
 wrap_bins() {
 	if probe_cc; then
 		mkdir -p "$1" || return 1
@@ -256,15 +251,17 @@ wrap_bins() {
 				local out="$1/${cmd##*/}"
 				local bin="$cmd"
 
+				if [ -x "$out" ] && ! grep -q STAGING_DIR "$out"; then
+					mv "$out" "$out.bin"
+					bin='$(dirname "$0")/'"${out##*/}"'.bin'
+				fi
+
 				case "${cmd##*/}" in
-					*-gcc-ar|*-gcc-nm|*-gcc-ranlib)
-						wrap_bin_other "$out" "$bin"
-					;;
-					*-ar|*-nm|*-ranlib)
-						wrap_bin_lto "$out" "$bin"
-					;;
 					*-*cc|*-*cc-*|*-*++|*-*++-*|*-cpp)
 						wrap_bin_cc "$out" "$bin"
+					;;
+					*-ld)
+						wrap_bin_ld "$out" "$bin"
 					;;
 					*)
 						wrap_bin_other "$out" "$bin"
@@ -285,8 +282,11 @@ print_config() {
 	local mksubtarget
 
 	local target="$("$CC" $CFLAGS -dumpmachine)"
+	local version="$("$CC" $CFLAGS -dumpversion)"
 	local cpuarch="${target%%-*}"
-	local prefix="${CC##*/}"; prefix="${prefix%-*}-"
+
+	# get CC; strip version; strip gcc and add - suffix
+	local prefix="${CC##*/}"; prefix="${prefix%-$version}"; prefix="${prefix%-*}-"
 	local config="${0%/scripts/*}/.config"
 
 	# if no target specified, print choice list and exit
@@ -321,9 +321,13 @@ print_config() {
 	fi
 
 	# bail out if there is a .config already
-	if [ -f "${0%/scripts/*}/.config" ]; then
-		echo "There already is a .config file, refusing to overwrite!" >&2
-		return 1
+	if [ -f "$config" ]; then
+		if [ "$OVERWRITE_CONFIG" == "" ]; then
+			echo "There already is a .config file, refusing to overwrite!" >&2
+			return 1
+		else
+			echo "There already is a .config file, trying to overwrite!"
+		fi
 	fi
 
 	case "$mktarget" in */*)
@@ -331,8 +335,11 @@ print_config() {
 		mktarget="${mktarget%/*}"
 	;; esac
 
+	if [ ! -f "$config" ]; then
+		touch "$config"
+	fi
 
-	echo "CONFIG_TARGET_${mktarget}=y" > "$config"
+	echo "CONFIG_TARGET_${mktarget}=y" >> "$config"
 
 	if [ -n "$mksubtarget" ]; then
 		echo "CONFIG_TARGET_${mktarget}_${mksubtarget}=y" >> "$config"
@@ -362,8 +369,18 @@ print_config() {
 	echo "CONFIG_TOOLCHAIN_PREFIX=\"$prefix\"" >> "$config"
 	echo "CONFIG_TARGET_NAME=\"$target\"" >> "$config"
 
-	if [ "$LIBC_TYPE" != glibc ]; then
-		echo "CONFIG_TOOLCHAIN_LIBC=\"$LIBC_TYPE\"" >> "$config"
+	if [ -f "$config" ]; then
+		sed -i '/CONFIG_EXTERNAL_TOOLCHAIN_LIBC_USE_MUSL/d' "$config"
+		sed -i '/CONFIG_EXTERNAL_TOOLCHAIN_LIBC_USE_GLIBC/d' "$config"
+	fi
+
+	if [ "$LIBC_TYPE" == glibc ]; then
+		echo "CONFIG_EXTERNAL_TOOLCHAIN_LIBC_USE_GLIBC=y" >> "$config"
+	elif [ "$LIBC_TYPE" == musl ]; then
+		echo "CONFIG_EXTERNAL_TOOLCHAIN_LIBC_USE_MUSL=y" >> "$config"
+	else
+		echo "Can't detect LIBC type. Aborting!" >&2
+		return 1
 	fi
 
 	local lib
@@ -456,6 +473,13 @@ probe_cpp() {
 }
 
 probe_libc() {
+	if [ -f $TOOLCHAIN/info.mk ]; then
+		LIBC_TYPE=$(grep LIBC_TYPE $TOOLCHAIN/info.mk | sed 's/LIBC_TYPE=//')
+		return 0
+	fi
+
+	echo "Warning! Can't find info.mk, trying to detect with alternative way."
+
 	if [ -z "$LIBC_TYPE" ]; then
 		if test_uclibc; then
 			LIBC_TYPE="uclibc"
@@ -533,8 +557,13 @@ while [ -n "$1" ]; do
 			exit $?
 		;;
 
+		--overwrite-config)
+			OVERWRITE_CONFIG=y
+		;;
+
 		--config)
 			if probe_cc; then
+				probe_libc
 				print_config "$1"
 				exit $?
 			fi
@@ -574,11 +603,9 @@ while [ -n "$1" ]; do
 			echo -e "  is used to specify C flags to be passed to the "     >&2
 			echo -e "  cross compiler when performing tests."               >&2
 			echo -e "  This parameter may be repeated multiple times."      >&2
+			echo -e "  Use --overwrite-config before --config to overwrite" >&2
+			echo -e "  an already present config with the required changes.">&2
 			exit 1
-		;;
-
-		--lto-archive-fixup)
-			LTO_ARCHIVE_FIXUP=yes
 		;;
 
 		*)

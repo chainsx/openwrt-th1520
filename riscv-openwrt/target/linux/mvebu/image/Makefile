@@ -34,7 +34,9 @@ define Build/boot-img-ext4
 	$(foreach dts,$(DEVICE_DTS), $(CP) $(KDIR)/image-$(dts).dtb $@.boot/$(dts).dtb;)
 	$(CP) $(IMAGE_KERNEL) $@.boot/$(KERNEL_NAME)
 	-$(CP) $@-boot.scr $@.boot/boot.scr
-	make_ext4fs -J -L kernel -l $(CONFIG_TARGET_KERNEL_PARTSIZE)M $@.bootimg $@.boot
+	make_ext4fs -J -L kernel -l $(CONFIG_TARGET_KERNEL_PARTSIZE)M \
+		$(if $(SOURCE_DATE_EPOCH),-T $(SOURCE_DATE_EPOCH)) \
+		$@.bootimg $@.boot
 endef
 
 define Build/buffalo-kernel-jffs2
@@ -49,6 +51,16 @@ define Build/buffalo-kernel-jffs2
 		--little-endian -v --squash-uids -q -f -n -x lzma -x rtime -m none \
 		--eraseblock=128KiB --pad=$(KERNEL_SIZE) -d $(KDIR)/kernel_jffs2 -o $@
 	rm -rf $(KDIR)/kernel_jffs2 $@.fakerd
+endef
+
+define Build/buffalo-kernel-ubifs
+	rm -rf $@-ubidir
+	mkdir -p $@-ubidir
+	mv $@ $@-ubidir/uImage.buffalo
+	touch $@
+	$(call Build/append-uImage-fakehdr, ramdisk)
+	mv $@ $@-ubidir/initrd.buffalo
+	$(STAGING_DIR_HOST)/bin/mkfs.ubifs $(KERNEL_UBIFS_OPTS) -r $@-ubidir $@
 endef
 
 # Some info about Ctera firmware:

@@ -1,17 +1,76 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 
-PKG_VERSION:=2022.01
-PKG_HASH:=81b4543227db228c03f8a1bf5ddbc813b0bb8f6555ce46064ef721a6fc680413
-PKG_BUILD_DEPENDS:=arm-trusted-firmware-tools/host
+PKG_VERSION:=2023.04
+PKG_HASH:=e31cac91545ff41b71cec5d8c22afd695645cd6e2a442ccdacacd60534069341
+PKG_BUILD_DEPENDS:=!(TARGET_ramips||TARGET_mediatek_mt7623):arm-trusted-firmware-tools/host
 
 include $(INCLUDE_DIR)/u-boot.mk
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/host-build.mk
 
+MT7621_LOWLEVEL_PRELOADER_URL:=https://raw.githubusercontent.com/mtk-openwrt/mt7621-lowlevel-preloader/a03b07c60bf1ba4add9b671d32caa102fe948180/
+
+define Download/mt7621-stage-sram
+  FILE:=mt7621_stage_sram.bin
+  URL:=$(MT7621_LOWLEVEL_PRELOADER_URL)
+  HASH:=1dda68aa089f0ff262e01539b990dea478952e9fb68bcc0a8cd6f76f0135c62e
+endef
+
+define Download/mt7621-stage-sram-noprint
+  FILE:=mt7621_stage_sram_noprint.bin
+  URL:=$(MT7621_LOWLEVEL_PRELOADER_URL)
+  HASH:=8ee419275144fc298e9444d413d98e965a55d283152a74ea6a1f8de79eb516b6
+endef
+
+ifdef CONFIG_TARGET_ramips_mt7621
+ifdef CONFIG_DEBUG
+$(eval $(call Download,mt7621-stage-sram))
+else
+$(eval $(call Download,mt7621-stage-sram-noprint))
+endif
+endif
+
 define U-Boot/Default
   BUILD_TARGET:=mediatek
   UBOOT_IMAGE:=u-boot-mtk.bin
+  HIDDEN:=1
+endef
+
+define U-Boot/mt7620_rfb
+  NAME:=MT7620 Reference Board
+  UBOOT_CONFIG:=mt7620_rfb
+  BUILD_DEVICES:=ralink_mt7620a-evb
+  BUILD_TARGET:=ramips
+  BUILD_SUBTARGET:=mt7620
+  UBOOT_IMAGE:=u-boot-with-spl.bin
+endef
+
+define U-Boot/mt7620_mt7530_rfb
+  NAME:=MT7620+MT7530 Reference Board
+  UBOOT_CONFIG:=mt7620_mt7530_rfb
+  BUILD_DEVICES:=ralink_mt7620a-mt7530-evb
+  BUILD_TARGET:=ramips
+  BUILD_SUBTARGET:=mt7620
+  UBOOT_IMAGE:=u-boot-with-spl.bin
+endef
+
+define U-Boot/mt7621_rfb
+  NAME:=MT7621 Reference Board
+  UBOOT_CONFIG:=mt7621_rfb
+  BUILD_DEVICES:=mediatek_mt7621-eval-board
+  BUILD_TARGET:=ramips
+  BUILD_SUBTARGET:=mt7621
+  UBOOT_IMAGE:=u-boot-mt7621.bin
+endef
+
+define U-Boot/mt7621_nand_rfb
+  NAME:=MT7621 Reference Board (NAND)
+  UBOOT_CONFIG:=mt7621_nand_rfb
+  BUILD_DEVICES:=mediatek_mt7621-eval-board
+  BUILD_TARGET:=ramips
+  BUILD_SUBTARGET:=mt7621
+  UBOOT_IMAGE:=u-boot-mt7621.bin
 endef
 
 define U-Boot/mt7622_rfb1
@@ -74,6 +133,7 @@ define U-Boot/mt7622_ubnt_unifi-6-lr
   BL2_BOOTDEV:=nor
   BL2_DDRBLOB:=2
   DEPENDS:=+trusted-firmware-a-mt7622-nor-2ddr
+  FIP_COMPRESS:=1
 endef
 
 define U-Boot/mt7623a_unielec_u7623
@@ -91,6 +151,24 @@ define U-Boot/mt7623n_bpir2
   UBOOT_CONFIG:=mt7623n_bpir2
 endef
 
+define U-Boot/mt7628_rfb
+  NAME:=MT7628 Reference Board
+  BUILD_DEVICES:=mediatek_mt7628an-eval-board
+  BUILD_TARGET:=ramips
+  BUILD_SUBTARGET:=mt76x8
+  UBOOT_CONFIG:=mt7628_rfb
+  UBOOT_IMAGE:=u-boot-with-spl.bin
+endef
+
+define U-Boot/ravpower_rp-wd009
+  NAME:=RAVPower RP-WD009
+  BUILD_TARGET:=ramips
+  BUILD_DEVICES:=ravpower_rp-wd009
+  BUILD_SUBTARGET:=mt76x8
+  UBOOT_CONFIG:=ravpower-rp-wd009-ram
+  UBOOT_IMAGE:=u-boot.bin
+endef
+
 define U-Boot/mt7629_rfb
   NAME:=MT7629 Reference Board
   BUILD_SUBTARGET:=mt7629
@@ -98,7 +176,132 @@ define U-Boot/mt7629_rfb
   UBOOT_CONFIG:=mt7629_rfb
 endef
 
+define U-Boot/mt7981_qihoo_360t7
+  NAME:=Qihoo 360T7
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=qihoo_360t7
+  UBOOT_CONFIG:=mt7981_qihoo-360t7
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7981
+  BL2_DDRTYPE:=ddr3
+  DEPENDS:=+trusted-firmware-a-mt7981-spim-nand-ddr3
+endef
+
+define U-Boot/mt7986_rfb
+  NAME:=MT7986 Reference Board
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=mediatek_mt7986-rfb
+  UBOOT_CONFIG:=mt7986_rfb
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=sdmmc
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-sdmmc-ddr4
+endef
+
+define U-Boot/mt7986_bananapi_bpi-r3-emmc
+  NAME:=BananaPi BPi-R3
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=bananapi_bpi-r3
+  UBOOT_CONFIG:=mt7986a_bpi-r3-emmc
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=emmc
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-emmc-ddr4
+endef
+
+define U-Boot/mt7986_bananapi_bpi-r3-sdmmc
+  NAME:=BananaPi BPi-R3
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=bananapi_bpi-r3
+  UBOOT_CONFIG:=mt7986a_bpi-r3-sd
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=sdmmc
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-sdmmc-ddr4
+endef
+
+define U-Boot/mt7986_bananapi_bpi-r3-snand
+  NAME:=BananaPi BPi-R3
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=bananapi_bpi-r3
+  UBOOT_CONFIG:=mt7986a_bpi-r3-snand
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-spim-nand-ddr4
+endef
+
+define U-Boot/mt7986_bananapi_bpi-r3-nor
+  NAME:=BananaPi BPi-R3
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=bananapi_bpi-r3
+  UBOOT_CONFIG:=mt7986a_bpi-r3-nor
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=nor
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-nor-ddr4
+  FIP_COMPRESS:=1
+endef
+
+define U-Boot/mt7986_tplink_tl-xdr4288
+  NAME:=TP-LINK TL-XDR4288
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=tplink_tl-xdr4288
+  UBOOT_CONFIG:=mt7986_tplink_tl-xdr4288
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr3
+  DEPENDS:=+trusted-firmware-a-mt7986-spim-nand-ddr3
+endef
+
+define U-Boot/mt7986_tplink_tl-xdr6086
+  NAME:=TP-LINK TL-XDR6086
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=tplink_tl-xdr6086
+  UBOOT_CONFIG:=mt7986_tplink_tl-xdr6086
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr3
+  DEPENDS:=+trusted-firmware-a-mt7986-spim-nand-ddr3
+endef
+
+define U-Boot/mt7986_tplink_tl-xdr6088
+  NAME:=TP-LINK TL-XDR6088
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=tplink_tl-xdr6088
+  UBOOT_CONFIG:=mt7986_tplink_tl-xdr6088
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr3
+  DEPENDS:=+trusted-firmware-a-mt7986-spim-nand-ddr3
+endef
+
+define U-Boot/mt7986_xiaomi_redmi-router-ax6000
+  NAME:=Xiaomi Redmi AX6000
+  BUILD_SUBTARGET:=filogic
+  BUILD_DEVICES:=xiaomi_redmi-router-ax6000-ubootmod
+  UBOOT_CONFIG:=mt7986_xiaomi_redmi-ax6000
+  UBOOT_IMAGE:=u-boot.fip
+  BL2_BOOTDEV:=spim-nand
+  BL2_SOC:=mt7986
+  BL2_DDRTYPE:=ddr4
+  DEPENDS:=+trusted-firmware-a-mt7986-spim-nand-ddr4
+endef
+
 UBOOT_TARGETS := \
+	mt7620_mt7530_rfb \
+	mt7620_rfb \
+	mt7621_nand_rfb \
+	mt7621_rfb \
 	mt7622_bananapi_bpi-r64-emmc \
 	mt7622_bananapi_bpi-r64-sdmmc \
 	mt7622_bananapi_bpi-r64-snand \
@@ -107,16 +310,45 @@ UBOOT_TARGETS := \
 	mt7622_ubnt_unifi-6-lr \
 	mt7623n_bpir2 \
 	mt7623a_unielec_u7623 \
-	mt7629_rfb
+	mt7628_rfb \
+	ravpower_rp-wd009 \
+	mt7629_rfb \
+	mt7981_qihoo_360t7 \
+	mt7986_bananapi_bpi-r3-emmc \
+	mt7986_bananapi_bpi-r3-sdmmc \
+	mt7986_bananapi_bpi-r3-snand \
+	mt7986_bananapi_bpi-r3-nor \
+	mt7986_tplink_tl-xdr4288 \
+	mt7986_tplink_tl-xdr6086 \
+	mt7986_tplink_tl-xdr6088 \
+	mt7986_xiaomi_redmi-router-ax6000 \
+	mt7986_rfb
 
+ifdef CONFIG_TARGET_mediatek
 UBOOT_MAKE_FLAGS += $(UBOOT_IMAGE:.fip=.bin)
+endif
 
 define Build/fip-image
+	$(if $(FIP_COMPRESS),\
+		xz -f -e -k -9 -C crc32 $(STAGING_DIR_IMAGE)/$(if $(BL2_SOC),$(BL2_SOC),$(BUILD_SUBTARGET))-$(BL2_BOOTDEV)-$(if $(BL2_DDRTYPE),$(BL2_DDRTYPE)-)$(if $(BL2_DDRBLOB),$(BL2_DDRBLOB)ddr-)bl31.bin ;\
+		xz -f -e -k -9 -C crc32 $(PKG_BUILD_DIR)/u-boot.bin \
+	)
 	$(STAGING_DIR_HOST)/bin/fiptool create \
-		--soc-fw $(STAGING_DIR_IMAGE)/$(BUILD_SUBTARGET)-$(BL2_BOOTDEV)-$(BL2_DDRBLOB)ddr-bl31.bin \
-		--nt-fw $(PKG_BUILD_DIR)/u-boot.bin \
+		--soc-fw $(STAGING_DIR_IMAGE)/$(if $(BL2_SOC),$(BL2_SOC),$(BUILD_SUBTARGET))-$(BL2_BOOTDEV)-$(if $(BL2_DDRTYPE),$(BL2_DDRTYPE)-)$(if $(BL2_DDRBLOB),$(BL2_DDRBLOB)ddr-)bl31.bin$(if $(FIP_COMPRESS),.xz) \
+		--nt-fw $(PKG_BUILD_DIR)/u-boot.bin$(if $(FIP_COMPRESS),.xz) \
 		$(PKG_BUILD_DIR)/u-boot.fip
 endef
+
+ifdef CONFIG_TARGET_ramips_mt7621
+define Build/Prepare
+	$(call Build/Prepare/Default)
+ifdef CONFIG_DEBUG
+	$(CP) $(DL_DIR)/mt7621_stage_sram.bin $(PKG_BUILD_DIR)/
+else
+	$(CP) $(DL_DIR)/mt7621_stage_sram_noprint.bin $(PKG_BUILD_DIR)/mt7621_stage_sram.bin
+endif
+endef
+endif
 
 define Build/Configure
 	$(call Build/Configure/U-Boot)
@@ -125,14 +357,16 @@ endef
 
 define Build/Compile
 	$(call Build/Compile/U-Boot)
-ifeq ($(UBOOT_IMAGE),u-boot.fip))
+ifeq ($(UBOOT_IMAGE),u-boot.fip)
 	$(call Build/fip-image)
 endif
 endef
 
 # don't stage files to bindir, let target/linux/mediatek/image/*.mk do that
+ifdef CONFIG_TARGET_mediatek
 define Package/u-boot/install
 endef
+endif
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(STAGING_DIR_IMAGE)
