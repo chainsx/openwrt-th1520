@@ -1,14 +1,13 @@
-. /lib/functions/uci-defaults.sh
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Copyright (C) 2022 OpenWrt.org
+#
 
-board=$(board_name)
+. /lib/functions/uci-defaults.sh
 
 board_config_update
 
-case "$board" in
-*)
-	ucidef_set_interfaces_lan_wan "eth0" "eth1"
-	;;
-esac
+ucidef_set_interfaces_lan_wan "eth0" "eth1"
 
 board_config_flush
 
