@@ -65,7 +65,7 @@ bash build_all.sh
 
 2.  按住板子上的 BOOT 键，然后将板子用数据线与电脑连接。
 
-3.  以下是在 Linux 上刷写 u-boot 的命令实例，Windows 同理。
+3.  以下是在 Linux 上刷写 u-boot 的命令示例，Windows 同理。
 
 
 ```
