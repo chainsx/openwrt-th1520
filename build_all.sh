@@ -11,6 +11,14 @@ install_depend(){
   vim wget xmlto xxd zlib1g-dev
 }
 
+clone_kernel(){
+  git clone https://github.com/revyos/thead-kernel.git -b lpi4a --depth=1
+  cp patches/*.patch thead-kernel
+  cd thead-kernel
+  patch -p1 < 001-fix-build.patch
+  cd ..
+}
+
 update_feeds(){
   cd riscv-openwrt
   ./scripts/feeds update -a

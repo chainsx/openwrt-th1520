@@ -1,0 +1,12 @@
+diff -Nuar -r --no-dereference a/scripts/Makefile b/scripts/Makefile
+--- a/scripts/Makefile     2023-06-22 21:22:56.925884697 +0800
++++ b/scripts/Makefile       2023-06-22 21:21:09.617491264 +0800
+@@ -3,7 +3,7 @@
+ # scripts contains sources for various helper programs used throughout
+ # the kernel for the build process.
+ 
+-CRYPTO_LIBS = $(shell pkg-config --libs libcrypto 2> /dev/null || echo -lcrypto)
++CRYPTO_LIBS = -lcrypto -pthread
+ CRYPTO_CFLAGS = $(shell pkg-config --cflags libcrypto 2> /dev/null)
+ 
+ hostprogs-always-$(CONFIG_BUILD_BIN2C)                 += bin2c
