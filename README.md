@@ -74,3 +74,7 @@ sudo ./fastboot flash uboot ./images/u-boot-with-spl.bin
 ### Flash openwrt image to micro SD card
 
 The openwrt image will be generated under `riscv-openwrt/bin/target`, decompress it and write it to micro SD card.
+
+## Thanks
+
+[saeziae](https://github.com/saeziae)
