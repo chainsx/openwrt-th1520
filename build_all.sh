@@ -36,6 +36,7 @@ make_op(){
 }
 
 install_depend
+clone_kernel
 update_feeds
 apply_feeds
 make_op
