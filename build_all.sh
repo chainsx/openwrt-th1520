@@ -17,6 +17,7 @@ clone_kernel(){
   cd thead-kernel
   patch -p1 < 001-fix-build.patch
   cd ..
+  git add . && git commit -m "user patch"
 }
 
 update_feeds(){
