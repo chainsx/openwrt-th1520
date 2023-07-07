@@ -65,10 +65,10 @@ bash build_all.sh
 Download SD-Boot u-boot from [here](./u-boot-with-spl.bin)
 
 ```
-sudo ./fastboot flash ram ./images/u-boot-with-spl.bin
-sudo ./fastboot reboot
+sudo fastboot flash ram .u-boot-with-spl.bin
+sudo fastboot reboot
 sleep 1
-sudo ./fastboot flash uboot ./images/u-boot-with-spl.bin
+sudo fastboot flash uboot u-boot-with-spl.bin
 ```
 
 ### Flash openwrt image to micro SD card
