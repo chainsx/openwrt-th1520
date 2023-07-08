@@ -1,3 +1,5 @@
+![image1](https://raw.githubusercontent.com/chainsx/openwrt-th1520/main/lpi4a.png)
+
 ## Getting started
 
 ### Prepare your environment
