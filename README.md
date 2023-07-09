@@ -60,18 +60,9 @@ make download V=s -j$(nproc) && make V=s -j$(nproc)
 bash build_all.sh
 ```
 
-## How to use
+## How to flash
 
-### Flash u-boot image to EMMC
-
-Download SD-Boot u-boot from [here](./u-boot-with-spl.bin)
-
-```
-sudo fastboot flash ram .u-boot-with-spl.bin
-sudo fastboot reboot
-sleep 1
-sudo fastboot flash uboot u-boot-with-spl.bin
-```
+Reference [here](https://github.com/chainsx/fedora-riscv-builder/blob/main/doc/install-guild-licheepi4a.md).
 
 ### Flash openwrt image to micro SD card
 

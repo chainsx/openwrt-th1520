@@ -20,6 +20,7 @@ endef
 define Build/boot-script
 	# Make an boot script and copy it to the boot partition
 	$(CP) config.txt $@.boot/config.txt
+	$(CP) fw_dynamic.bin $@.boot/fw_dynamic.bin
 	$(CP) light_aon_fpga.bin $@.boot/light_aon_fpga.bin
 	$(CP) light_c906_audio.bin $@.boot/light_c906_audio.bin
 endef
