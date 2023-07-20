@@ -20,8 +20,8 @@ download_toolchain(){
 compile_u-boot(){
   git clone --depth=1 https://github.com/chainsx/thead-u-boot.git -b extlinux
   cd thead-u-boot
-  make ARCH=riscv CROSS_COMPILE=../riscv64-gcc/bin/riscv64-unknown-linux-gnu- light_lpi4a_defconfig
-  make ARCH=riscv CROSS_COMPILE=../riscv64-gcc/bin/riscv64-unknown-linux-gnu- -j$(nproc)
+  make ARCH=riscv CROSS_COMPILE=${work_dir}/riscv64-gcc/bin/riscv64-unknown-linux-gnu- light_lpi4a_defconfig
+  make ARCH=riscv CROSS_COMPILE=${work_dir}/riscv64-gcc/bin/riscv64-unknown-linux-gnu- -j$(nproc)
   cp u-boot-with-spl.bin ..
   cd ..
 }
@@ -53,6 +53,7 @@ make_op(){
   make download V=s -j$(nproc) && make V=s -j$(nproc)
 }
 
+work_dir=$(pwd)
 install_depend
 download_toolchain
 compile_u-boot
