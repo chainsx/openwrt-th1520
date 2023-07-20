@@ -11,13 +11,30 @@ install_depend(){
   vim wget xmlto xxd zlib1g-dev
 }
 
+download_toolchain(){
+  wget https://github.com/chainsx/armbian-riscv-build/releases/download/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.1-20220906.tar.gz
+  tar -zxf Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.1-20220906.tar.gz
+  rm Xuantie*tar.gz && mv Xuantie* riscv64-gcc
+}
+
+compile_u-boot(){
+  git clone --depth=1 https://github.com/chainsx/thead-u-boot.git -b extlinux
+  cd thead-u-boot
+  make ARCH=riscv CROSS_COMPILE=../riscv64-gcc/bin/riscv64-unknown-linux-gnu- light_lpi4a_defconfig
+  make ARCH=riscv CROSS_COMPILE=../riscv64-gcc/bin/riscv64-unknown-linux-gnu- -j$(nproc)
+  cp u-boot-with-spl.bin ..
+  cd ..
+}
+
 clone_kernel(){
   git clone https://github.com/revyos/thead-kernel.git -b lpi4a --depth=1
   cp patches/*.patch thead-kernel
   cd thead-kernel
   patch -p1 < 001-fix-build.patch
   cd ..
-  git add . && git commit -m "user patch"
+  git config --global user.name "openwrt"
+  git config --global user.email "openwrt@openwrt.lan"
+  git add . && git commit -m "user_patch"
 }
 
 update_feeds(){
@@ -37,6 +54,8 @@ make_op(){
 }
 
 install_depend
+download_toolchain
+compile_u-boot
 clone_kernel
 update_feeds
 apply_feeds

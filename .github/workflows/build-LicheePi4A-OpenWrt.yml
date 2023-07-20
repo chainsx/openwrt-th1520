@@ -72,7 +72,7 @@ jobs:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ needs.prepare_release.outputs.release_id }}
-          file: "/home/runner/work/openwrt-th1520/openwrt-th1520/riscv-openwrt/bin/targets/thead/th1520/*.gz;/home/runner/work/openwrt-th1520/openwrt-th1520/riscv-openwrt/bin/targets/thead/th1520/sha256sums"
+          file: "/home/runner/work/openwrt-th1520/openwrt-th1520/u-boot-with-spl.bin;/home/runner/work/openwrt-th1520/openwrt-th1520/riscv-openwrt/bin/targets/thead/th1520/*.gz;/home/runner/work/openwrt-th1520/openwrt-th1520/riscv-openwrt/bin/targets/thead/th1520/sha256sums"
           draft: false
       - name: Rollback release
         if: failure() && needs.prepare_release.outputs.release_id != ''
