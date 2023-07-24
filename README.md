@@ -68,6 +68,13 @@ Reference [here](https://github.com/chainsx/fedora-riscv-builder/blob/main/doc/i
 
 The openwrt image will be generated under `riscv-openwrt/bin/target`, decompress it and write it to micro SD card.
 
+## How to enable WiFi
+
+```
+wifi config
+reboot
+```
+
 ## Thanks
 
 [saeziae](https://github.com/saeziae)
