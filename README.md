@@ -68,4 +68,6 @@ reboot
 
 ## Thanks
 
+[Rabenda aka revy](https://github.com/Rabenda)
+
 [saeziae](https://github.com/saeziae)
