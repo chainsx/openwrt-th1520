@@ -1,0 +1,45 @@
+From cded6457c839e09940f795c44277ae7cae82d5ca Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Christoph=20M=C3=BCllner?= <christoph.muellner@vrull.eu>
+Date: Mon, 24 Apr 2023 23:09:06 +0200
+Subject: [PATCH] riscv: xtheadmempair: Fix CFA reg notes
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The current implementation triggers an assertion in
+dwarf2out_frame_debug_cfa_offset() under certain circumstances.
+The standard code uses REG_FRAME_RELATED_EXPR notes instead
+of REG_CFA_OFFSET notes when saving registers on the stack.
+So let's do this as well.
+
+gcc/ChangeLog:
+
+	* config/riscv/thead.cc (th_mempair_save_regs):
+	Emit REG_FRAME_RELATED_EXPR notes in prologue.
+
+Signed-off-by: Christoph Müllner <christoph.muellner@vrull.eu>
+---
+ gcc/config/riscv/thead.cc | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/gcc/config/riscv/thead.cc b/gcc/config/riscv/thead.cc
+index 75203805310..d7e3cf80d9b 100644
+--- a/gcc/config/riscv/thead.cc
++++ b/gcc/config/riscv/thead.cc
+@@ -368,8 +368,12 @@ th_mempair_save_regs (rtx operands[4])
+   rtx set2 = gen_rtx_SET (operands[2], operands[3]);
+   rtx insn = emit_insn (gen_rtx_PARALLEL (VOIDmode, gen_rtvec (2, set1, set2)));
+   RTX_FRAME_RELATED_P (insn) = 1;
+-  add_reg_note (insn, REG_CFA_OFFSET, copy_rtx (set1));
+-  add_reg_note (insn, REG_CFA_OFFSET, copy_rtx (set2));
++
++  REG_NOTES (insn) = alloc_EXPR_LIST (REG_FRAME_RELATED_EXPR,
++				      copy_rtx (set1), REG_NOTES (insn));
++
++  REG_NOTES (insn) = alloc_EXPR_LIST (REG_FRAME_RELATED_EXPR,
++				      copy_rtx (set2), REG_NOTES (insn));
+ }
+ 
+ /* Similar like riscv_restore_reg, but restores two registers from memory
+-- 
+2.39.2

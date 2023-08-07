@@ -26,17 +26,6 @@ compile_u-boot(){
   cd ..
 }
 
-clone_kernel(){
-  git clone https://github.com/revyos/thead-kernel.git -b lpi4a --depth=1
-  cp patches/*.patch thead-kernel
-  cd thead-kernel
-  patch -p1 < 001-fix-build.patch
-  cd ..
-  git config --global user.name "openwrt"
-  git config --global user.email "openwrt@openwrt.lan"
-  git add . && git commit -m "user_patch"
-}
-
 update_feeds(){
   cd riscv-openwrt
   ./scripts/feeds update -a
@@ -57,7 +46,6 @@ work_dir=$(pwd)
 install_depend
 download_toolchain
 compile_u-boot
-clone_kernel
 update_feeds
 apply_feeds
 make_op

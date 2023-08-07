@@ -90,6 +90,9 @@ endif
 ifneq ($(filter -march=armv%,$(TARGET_OPTIMIZATION)),)
   GCC_ARCH:=$(patsubst -march=%,%,$(filter -march=armv%,$(TARGET_OPTIMIZATION)))
 endif
+ifneq ($(filter -march=rv%,$(TARGET_OPTIMIZATION)),)
+  GCC_ARCH:=$(patsubst -march=%,%,$(filter -march=rv%,$(TARGET_OPTIMIZATION)))
+endif
 ifdef CONFIG_HAS_SPE_FPU
   TARGET_SUFFIX:=$(TARGET_SUFFIX)spe
 endif

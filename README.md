@@ -23,15 +23,6 @@ vim wget xmlto xxd zlib1g-dev
 git clone https://github.com/chainsx/openwrt-th1520 --depth=1
 ```
 
-#### Clone kernel source code
-
-```
-git clone https://github.com/revyos/thead-kernel.git -b lpi4a --depth=1
-cp patches/001-fix-build.patch thead-kernel && cd thead-kernel
-patch -p1 < 001-fix-build.patch
-cd ..
-```
-
 #### Update feeds
 
 ```
