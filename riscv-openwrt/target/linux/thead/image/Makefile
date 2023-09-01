@@ -14,6 +14,7 @@ define Build/boot-common
 	mkdir -p $@.boot
 
 	$(CP) $(DTS_DIR)/$(DEVICE_DTS).dtb $@.boot/light-lpi4a.dtb
+	$(CP) $(DTS_DIR)/$(DEVICE_DTS)-16gb.dtb $@.boot/light-lpi4a-16gb.dtb
 	$(CP) $(IMAGE_KERNEL) $@.boot/kernel.img
 endef
 

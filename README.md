@@ -1,29 +1,79 @@
-![image1](https://raw.githubusercontent.com/chainsx/openwrt-th1520/main/lpi4a.png)
+![image1](./lpi4a.png)
+（这张图太老了，板子给 hxd 玩了，有没有帅气/可爱的好心人帮忙补一下新的截图）
 
 ## Getting started
 
-### Prepare your environment
+## 使用
 
-#### Install depend
+### 下载预构建镜像
+
+[Releases](https://github.com/chainsx/openwrt-th1520/releases)
+
+### 刷写系统
+
+参考 [这里](https://github.com/chainsx/armbian-riscv-build/blob/main/doc/licheepi-4a-install-guide.md).
+
+注意：其中所使用到的 u-boot 以及系统镜像需要替换为本仓库的
+
+## 如何使用 WiFi
 
 ```
-sudo apt update -y
-sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
-git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
-libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz \
-mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
-libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
-vim wget xmlto xxd zlib1g-dev
+wifi config
+reboot
 ```
 
-#### Clone OpenWrt source code
+### 默认信息
+
+管理 IP: `192.168.1.1`
+
+用户: `root`
+
+密码: 无
+
+### 内置软件包
+
+嘿嘿，不告诉你，，，
+
+## 自行编译
+
+### 准备环境
+
+编译主机：Ubuntu 22.04, Debian 12 (理论上不限架构)
+
+**不能使用 root 用户进行编译！**
+
+### 1.  使用一次构建脚本
+
+```
+bash build_all.sh
+```
+
+### 2.  按步骤编译（自定义配置）
+
+<details>
+<summary>&#160&#160&#160 展开</summary>
+
+#### 安装依赖
+
+```
+sudo apt update
+
+sudo apt install -y ack binutils bison build-essential \
+	ccache cmake device-tree-compiler flex gawk gettext \
+	git gperf intltool libelf-dev libglib2.0-dev \
+	libgmp3-dev libltdl-dev libncurses5-dev libssl-dev \
+	libreadline-dev libtool wget nano patch sudo \
+	pkgconf python3 python3-pyelftools xxd zlib1g-dev \
+	subversion swig texinfo unzip rsync
+```
+
+#### 下载代码
 
 ```
 git clone https://github.com/chainsx/openwrt-th1520 --depth=1
 ```
 
-#### Update feeds
+#### 更新 feeds
 
 ```
 cd openwrt-th1520/riscv-openwrt
@@ -32,39 +82,25 @@ cd openwrt-th1520/riscv-openwrt
 cd ..
 ```
 
-#### Apply build configure
+#### 应用配置文件
 
 ```
 cp lpi4a.config riscv-openwrt/.config
 cd riscv-openwrt && make defconfig
 ```
 
-#### Build openwrt
+#### 自定义配置
+
+```
+make menuconfig
+```
+
+#### 开始编译
 
 ```
 make download V=s -j$(nproc) && make V=s -j$(nproc)
 ```
-
-### Simply start with the build script
-
-```
-bash build_all.sh
-```
-
-## How to flash
-
-Reference [here](https://github.com/chainsx/fedora-riscv-builder/blob/main/doc/install-guild-licheepi4a.md).
-
-### Flash openwrt image to micro SD card
-
-The openwrt image will be generated under `riscv-openwrt/bin/target`, decompress it and write it to micro SD card.
-
-## How to enable WiFi
-
-```
-wifi config
-reboot
-```
+</details>
 
 ## Thanks
 
