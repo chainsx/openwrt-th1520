@@ -1,5 +1,4 @@
 ![image1](./lpi4a.png)
-（这张图太老了，板子给 hxd 玩了，有没有帅气/可爱的好心人帮忙补一下新的截图）
 
 ## Getting started
 
