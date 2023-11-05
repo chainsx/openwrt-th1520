@@ -12,7 +12,7 @@
 
 参考 [这里](https://github.com/chainsx/armbian-riscv-build/blob/main/doc/licheepi-4a-install-guide.md).
 
-注意：其中所使用到的 u-boot 以及系统镜像需要替换为本仓库的
+注意：其中所使用到的系统镜像需要替换为本仓库的
 
 ## 如何使用 WiFi
 
